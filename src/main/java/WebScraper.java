@@ -9,8 +9,10 @@ public class WebScraper {
 
     public static void main(String[] args) {
 
-        String searchQuery = "example" ;
-        String baseUrl = "https://nitter.net/search?f=tweets&q=" ;
+
+
+        String searchQuery = "jeff bezos" ;
+        String baseUrl = "https://nitter.net/search?f=tweets&q=";
         WebClient client = new WebClient();
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
@@ -29,8 +31,7 @@ public class WebScraper {
                     Item item = new Item();
 
                     item.setBody(spanBody.asNormalizedText());
-
-
+                    
                     ObjectMapper mapper = new ObjectMapper();
                     String jsonString = mapper.writeValueAsString(item) ;
 
