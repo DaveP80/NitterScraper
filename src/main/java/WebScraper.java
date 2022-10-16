@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 
 public class WebScraper {
 
-    public static void main(String[] args) {
-
+    public static void main(String[] args) throws InterruptedException {
 
 
         String searchQuery = "jeff bezos" ;
@@ -33,13 +35,26 @@ public class WebScraper {
                     item.setBody(spanBody.asNormalizedText());
                     
                     ObjectMapper mapper = new ObjectMapper();
-                    String jsonString = mapper.writeValueAsString(item) ;
+                    String jsonString = mapper.writeValueAsString(item);
+                    insertTweet(jsonString);
 
                     System.out.println(jsonString);
                 }
+
             }
         } catch(Exception e){
             e.printStackTrace();
         }
+
+        Thread.sleep(15000);
+    }
+
+        static MongoUtil mongoUtil = new MongoUtil();
+        static MongoDatabase database = mongoUtil.getDB();
+        static MongoCollection<Document> collection = database.getCollection("body");
+        public static void insertTweet(String result) throws InterruptedException
+    {
+        Document document = new Document("body", result);
+        mongoUtil.getUserCollection().insertOne(document);
     }
 }
