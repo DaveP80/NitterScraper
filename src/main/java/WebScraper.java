@@ -1,4 +1,5 @@
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -13,40 +14,44 @@ public class WebScraper {
     public static void main(String[] args) throws InterruptedException {
 
 
-        String searchQuery = "jeff bezos" ;
+        String searchQuery = "jeff bezos";
         String baseUrl = "https://nitter.net/search?f=tweets&q=";
         WebClient client = new WebClient();
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
-        try {
-            String searchUrl = baseUrl + URLEncoder.encode(searchQuery, "UTF-8");
-            HtmlPage page = client.getPage(searchUrl);
 
-            List<HtmlElement> items = page.getByXPath("//div[@class='timeline-item ']") ;
-            if(items.isEmpty()){
-                System.out.println("No items found !");
-            }else{
-                for(HtmlElement htmlItem : items){
+        int count = 0;
+        while (count<5) {
+            try {
+                String searchUrl = baseUrl + URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
+                HtmlPage page = client.getPage(searchUrl);
 
-                    HtmlElement spanBody = htmlItem.getFirstByXPath(".//div[@class='tweet-body']");
+                List<HtmlElement> items = page.getByXPath("//div[@class='timeline-item ']");
+                if (items.isEmpty()) {
+                    System.out.println("No items found !");
+                } else {
+                    for (HtmlElement htmlItem : items) {
 
-                    Item item = new Item();
+                        HtmlElement spanBody = htmlItem.getFirstByXPath(".//div[@class='tweet-body']");
 
-                    item.setBody(spanBody.asNormalizedText());
-                    
-                    ObjectMapper mapper = new ObjectMapper();
-                    String jsonString = mapper.writeValueAsString(item);
-                    insertTweet(jsonString);
+                        Item item = new Item();
 
-                    System.out.println(jsonString);
+                        item.setBody(spanBody.asNormalizedText());
+
+                        ObjectMapper mapper = new ObjectMapper();
+                        String jsonString = mapper.writeValueAsString(item);
+                        insertTweet(jsonString);
+
+                        System.out.println(jsonString);
+                    }
+
                 }
-
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch(Exception e){
-            e.printStackTrace();
+            count ++;
+            Thread.sleep(40000);
         }
-
-        Thread.sleep(15000);
     }
 
         static MongoUtil mongoUtil = new MongoUtil();
