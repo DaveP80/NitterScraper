@@ -1,6 +1,8 @@
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -13,15 +15,14 @@ public class WebScraper {
 
     public static void main(String[] args) throws InterruptedException {
 
-
-        String searchQuery = "jeff bezos";
+        String searchQuery = "example";
         String baseUrl = "https://nitter.net/search?f=tweets&q=";
         WebClient client = new WebClient();
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
 
         int count = 0;
-        while (count<5) {
+        while (count<10) {
             try {
                 String searchUrl = baseUrl + URLEncoder.encode(searchQuery, StandardCharsets.UTF_8);
                 HtmlPage page = client.getPage(searchUrl);
@@ -40,26 +41,29 @@ public class WebScraper {
 
                         ObjectMapper mapper = new ObjectMapper();
                         String jsonString = mapper.writeValueAsString(item);
-                        insertTweet(jsonString);
-
-                        System.out.println(jsonString);
+                        //filter tweets that aren't retweets
+                        Pattern pattern = Pattern.compile("(.*)retweet(.*)");
+                        Matcher matcher = pattern.matcher(jsonString);
+                        if (!(matcher.find())) {
+                            insertTweet(jsonString);
+                            System.out.println(jsonString);
+                        }
                     }
-
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("duplicate tweet");
             }
             count ++;
-            Thread.sleep(40000);
+            if (count==10){System.exit(0);}
+            Thread.sleep(10000);
         }
     }
-
         static MongoUtil mongoUtil = new MongoUtil();
         static MongoDatabase database = mongoUtil.getDB();
         static MongoCollection<Document> collection = database.getCollection("body");
-        public static void insertTweet(String result) throws InterruptedException
+        public static void insertTweet(String obj) throws InterruptedException
     {
-        Document document = new Document("body", result);
-        mongoUtil.getUserCollection().insertOne(document);
+        Document document = new Document("body", obj);
+        collection.insertOne(document);
     }
 }
